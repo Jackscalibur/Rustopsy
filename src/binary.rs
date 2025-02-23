@@ -14,3 +14,5 @@ pub fn get_binary_architecture(path: &str) -> io::Result<String> {
 
     Ok(arch)
 }
+
+// TODO: Relro status, PIE status, NX status, Stack Canary status, FORTIFY_SOURCE status, etc
