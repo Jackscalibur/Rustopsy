@@ -40,3 +40,5 @@ impl ELFBinary {
         })
     }
 }
+
+// Implement self status method for the binary section headers
