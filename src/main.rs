@@ -1,10 +1,17 @@
 mod binary;
 
+use std::env;
+use binary::ELFBinary;
+
 fn main() {
-    println!("Welcome to Rustopsy!");
+    let args: Vec<String> = env::args().collect();
+    if args.len() != 2 {
+        println!("Usage: {} <path-to-elf-binary>", args[0]);
+        return;
+    }
 
-    let bin_arch = binary::get_binary_architecture("src/main.rs").unwrap();
-    println!("Binary architecture: {}", bin_arch);
-
-    // TODO: Add usage instructions
+    match ELFBinary::analyze(&args[1]) {
+        Ok(binary) => println!("{}", binary.generate_report()),
+        Err(e) => eprintln!("Error analyzing binary: {}", e),
+    }
 }   

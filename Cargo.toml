@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 goblin = "0.9.3"
+thiserror = "1.0"
