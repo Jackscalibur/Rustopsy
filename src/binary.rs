@@ -11,7 +11,6 @@ pub enum Architecture {
     X86,
     ARM,
     AARCH64,
-    Unknown(u16),
 }
 
 #[derive(Debug, Clone)]
@@ -86,7 +85,7 @@ impl ELFBinary {
             goblin::elf::header::EM_386 => Architecture::X86,
             goblin::elf::header::EM_ARM => Architecture::ARM,
             goblin::elf::header::EM_AARCH64 => Architecture::AARCH64,
-            unknown => Architecture::Unknown(unknown),
+            unknown => return Err(BinaryAnalysisError::UnsupportedArchitecture(unknown)),
         };
 
         // Check RELRO status from dynamic entries
@@ -105,13 +104,46 @@ impl ELFBinary {
             RelroStatus::None
         };
 
+        // Check PIE status
+        let pie = if elf.header.e_type == goblin::elf::header::ET_DYN {
+            PieStatus::PIE
+        } else {
+            PieStatus::NonPIE
+        };
+
+        // Check NX status
+        let nx = if elf.program_headers.iter().any(|ph| 
+            ph.p_type == goblin::elf::program_header::PT_GNU_STACK && 
+            (ph.p_flags & goblin::elf::program_header::PF_X) == 0
+        ) {
+            NxStatus::NX
+        } else {
+            NxStatus::NoNX
+        };
+
+        // Check stack canary status
+        let canary = if elf.syms.iter().any(|sym| sym.st_name != 0 && 
+            elf.strtab.get_at(sym.st_name).map_or(false, |name| name == "__stack_chk_fail")) {
+            CanaryStatus::Enabled
+        } else {
+            CanaryStatus::Disabled
+        };
+
+        // Check FORTIFY_SOURCE status
+        let fortify_source = if elf.syms.iter().any(|sym| sym.st_name != 0 && 
+            elf.strtab.get_at(sym.st_name).map_or(false, |name| name.contains("_chk"))) {
+            FortifyStatus::Enabled
+        } else {
+            FortifyStatus::Disabled
+        };
+
         // Basic security feature analysis
         let security_features = SecurityFeatures {
             relro,  // Now using actual analysis
-            pie: PieStatus::NonPIE,    // TODO: Implement actual analysis
-            nx: NxStatus::NoNX,        // TODO: Implement actual analysis
-            canary: CanaryStatus::Disabled, // TODO: Implement actual analysis
-            fortify_source: FortifyStatus::Disabled, // TODO: Implement actual analysis
+            pie,    // Now using actual analysis
+            nx,     // Now using actual analysis
+            canary, // Now using actual analysis
+            fortify_source, // Now using actual analysis
         };
 
         Ok(Self {
