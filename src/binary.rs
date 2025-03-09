@@ -4,7 +4,7 @@ use std::io::Read;
 use std::path::PathBuf;
 use thiserror::Error;
 
-
+/// Represents the architecture of the binary.
 #[derive(Debug, Clone)]
 pub enum Architecture {
     X86_64,
@@ -13,6 +13,7 @@ pub enum Architecture {
     AARCH64,
 }
 
+/// Represents the status of the RELRO (Read-Only Relocation) feature.
 #[derive(Debug, Clone)]
 pub enum RelroStatus {
     Full,
@@ -20,30 +21,35 @@ pub enum RelroStatus {
     None,
 }
 
+/// Represents the status of the Position Independent Executable (PIE) feature.
 #[derive(Debug, Clone)]
 pub enum PieStatus {
     PIE,
     NonPIE,
 }
 
+/// Represents the status of the NX (No eXecute) feature.
 #[derive(Debug, Clone)]
 pub enum NxStatus {
     NX,
     NoNX,
 }
 
+/// Represents the status of the stack canary feature.
 #[derive(Debug, Clone)]
 pub enum CanaryStatus {
     Enabled,
     Disabled,
 }
 
+/// Represents the status of the FORTIFY_SOURCE feature.
 #[derive(Debug, Clone)]
 pub enum FortifyStatus {
     Enabled,
     Disabled,
 }
 
+/// Errors that can occur during binary analysis.
 #[derive(Debug, Error)]
 pub enum BinaryAnalysisError {
     #[error("IO error: {0}")]
@@ -54,6 +60,7 @@ pub enum BinaryAnalysisError {
     UnsupportedArchitecture(u16),
 }
 
+/// Struct representing the security features of a binary.
 #[derive(Debug, Clone)]
 pub struct SecurityFeatures {
     pub relro: RelroStatus,
@@ -63,6 +70,7 @@ pub struct SecurityFeatures {
     pub fortify_source: FortifyStatus,
 }
 
+/// Struct representing an ELF binary.
 #[derive(Debug)]
 pub struct ELFBinary {
     pub path: PathBuf,
@@ -71,6 +79,15 @@ pub struct ELFBinary {
 }
 
 impl ELFBinary {
+    /// Analyzes the ELF binary at the given path.
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - A path to the ELF binary to analyze.
+    ///
+    /// # Returns
+    ///
+    /// A result containing the analyzed `ELFBinary` or an error if the analysis fails.
     pub fn analyze(path: impl Into<PathBuf>) -> Result<Self, BinaryAnalysisError> {
         let path = path.into();
         let mut file = File::open(&path)?;
@@ -153,6 +170,11 @@ impl ELFBinary {
         })
     }
     
+    /// Calculates the security score of the binary based on its features.
+    ///
+    /// # Returns
+    ///
+    /// A score from 0 to 10 representing the security level of the binary.
     pub fn security_score(&self) -> u8 {
         let mut score = 0;
         
@@ -186,6 +208,11 @@ impl ELFBinary {
         score
     }
     
+    /// Generates a report summarizing the analysis of the binary.
+    ///
+    /// # Returns
+    ///
+    /// A string containing the analysis report.
     pub fn generate_report(&self) -> String {
         format!(
             "Binary Analysis Report for: {}\n\
